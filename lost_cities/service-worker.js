@@ -1,8 +1,8 @@
 const CACHE_NAME = 'score-calculator-cache-v1';
 const urlsToCache = [
-  './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon.png
 ];
 
 self.addEventListener('install', event => {
