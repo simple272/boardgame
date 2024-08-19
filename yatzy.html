@@ -22,6 +22,9 @@
         th {
             background-color: #f4f4f4;
         }
+        .button-group{
+            margin-bottom: 60px;
+        }
         .total-score {
             font-weight: bold;
         }
@@ -60,6 +63,15 @@
             border: none;
             cursor: pointer;
             margin-right: 10px;
+        }
+        .save-records-btn {
+            float: right;
+            padding: 5px 10px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 30px;
         }
          .record-item {
         background-color: #f9f9f9;
@@ -121,13 +133,14 @@
 </head>
 <body>
     <div class="content-container">
-    <h3>
+    <h2>
         요추 다이스 점수 계산기
-        <button class="show-records-btn" onclick="saveRecords()">저장</button>
+    </h2>
+    <div class="button-group">
+        <button class="save-records-btn" onclick="saveRecords()">저장</button>
         <button class="show-records-btn" onclick="showRecords()">기록</button>
         <button class="reset-btn" onclick="newGame()">새게임</button>
-        
-    </h3>
+    </div>
     <table>
         <thead>
             <tr>
@@ -289,20 +302,28 @@
             localStorage.setItem('records', JSON.stringify(records));
         }
 
+        function deleteRecord(sessionId) {
+            console.log(sessionId);
+            const records = JSON.parse(localStorage.getItem('records')) || {};
+            delete records[sessionId];
+            localStorage.setItem('records', JSON.stringify(records));
+            loadRecords();  // 기록을 다시 로드하여 갱신된 리스트를 보여줍니다.
+        }
+
         function loadRecords() {
             const records = JSON.parse(localStorage.getItem('records')) || {};
             const recordList = document.getElementById('recordList');
             recordList.innerHTML = '';
-
-            const sortedRecords = Object.values(records).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            for (const record of sortedRecords) {
+            
+            const sortedRecords = Object.entries(records).sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+            sortedRecords.forEach(([sessionId, record]) => {
                 recordList.innerHTML += `
                     <div class="record-item">
                         <div class="record-date">${record.date}</div>
                         <div class="record-score">${record.totalScore}</div>
+                        <button onclick="deleteRecord('${sessionId}')">삭제</button>
                     </div>`;
-            }
+            });
         }
 
         function showRecords() {
