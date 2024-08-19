@@ -1,502 +1,340 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="./manifest.json" />
-    <title>로스트시티 점수 계산기</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>요추 다이스 점수 계산기</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-        padding: 0;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: center;
-      }
-      th {
-        background-color: #f2f2f2;
-      }
-      input {
-        width: 100%;
-        box-sizing: border-box;
-        text-align: center;
-      }
-      button {
-        margin-top: 20px;
-        padding: 10px 20px;
-      }
-      input[readonly] {
-        background-color: #e9ecef; /* 밝은 회색 배경 */
-        border: 1px solid #ced4da; /* 경계선 색상 */
-        color: #495057; /* 텍스트 색상 */
-        cursor: not-allowed; /* 마우스 커서를 not-allowed로 변경 */
-      }
-      .inline-container {
-        display: flex;
-        align-items: center;
-      }
-      .inline-container h2 {
-        margin: 0;
-        margin-right: 10px; /* 요소 간의 여백 조절 */
-      }
-      .inline-container input {
-        width: 250px; /* 입력 필드 너비 조정 */
-        font-size: 14px; /* 입력 필드 텍스트 크기 조정 */
-      }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .total-score {
+            font-weight: bold;
+        }
+        .fixed-score-label {
+            font-weight: normal;
+        }
+        input {
+            width: 80px;
+            text-align: center;
+        }  
+        .fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            font-weight: bold;
+        }
+        .reset-btn {
+            float: right;
+            padding: 5px 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .show-records-btn {
+            float: right;
+            padding: 5px 10px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        #recordDialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 400px;
+            max-height: 30vh; /* 최대 높이 설정 */
+            overflow-y: auto; /* 레코드가 많아질 경우 스크롤 활성화 */
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        #recordDialog h2 {
+            margin-top: 0;
+        }
+        #recordDialog button {
+            padding: 5px 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            float: right;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
 
-      .centered-container {
-        text-align: center; /* 텍스트 중앙 정렬 */
-        margin-top: 20px; /* 상단 여백 추가 (필요에 따라 조정) */
-      }
+        /* 테이블 상단에 여유 공간 확보 */
+        .content-container {
+            margin-bottom: 80px; /* 총합 섹션 높이만큼 여백 추가 */
+        }
     </style>
-    
-    <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(registration => {
-          console.log('Service Worker 등록됨:', registration);
-        })
-        .catch(error => {
-          console.log('Service Worker 등록 실패:', error);
-        });
-    });
-  }
-</script>
-  </head>
-  <body>
-    <h1>로스트시티 점수 계산기</h1>
+</head>
+<body>
+    <div class="content-container">
+    <h3>
+        요추 다이스 점수 계산기
+        <button class="show-records-btn" onclick="saveRecords()">저장</button>
+        <button class="show-records-btn" onclick="showRecords()">기록</button>
+        <button class="reset-btn" onclick="newGame()">새게임</button>
+        
+    </h3>
+    <table>
+        <thead>
+            <tr>
+                <th>카테고리</th>
+                <th>설명</th>
+                <th>점수</th>
+            </tr>
+        </thead>
+        <tbody id="scoreTable">
+            <!-- 상단 점수 -->
+            <tr>
+                <td>Ones</td>
+                <td>1 주사위의 합</td>
+                <td><input type="number" id="ones" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Twos</td>
+                <td>2 주사위의 합</td>
+                <td><input type="number" id="twos" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Threes</td>
+                <td>3 주사위의 합</td>
+                <td><input type="number" id="threes" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Fours</td>
+                <td>4 주사위의 합</td>
+                <td><input type="number" id="fours" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Fives</td>
+                <td>5 주사위의 합</td>
+                <td><input type="number" id="fives" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Sixes</td>
+                <td>6 주사위의 합</td>
+                <td><input type="number" id="sixes" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>보너스</br>35점</td>
+                <td>상단 점수의 합이</br>63 이상일 경우</td>
+                <td id="bonusScore">0</td>
+            </tr>
 
-    <div class="centered-container">
-      <!-- <label for="round">라운드: </label>
-      <input type="number" id="round" value="1" min="1" /> -->
-      <h2 id="round"></h2>
-    </div>
-
-    <div class="inline-container">
-      <h2>Player 1</h2>
-      <input type="text" id="player1Name" />
-    </div>
-    <table id="player1-table">
-      <thead>
-        <tr>
-          <th>점수 종류</th>
-          <th>카드1</th>
-          <th>카드2</th>
-          <th>카드3</th>
-          <th>카드4</th>
-          <th>카드5</th>
-          <th>카드6</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>합계</td>
-          <td><input type="number" id="p1_sum1" /></td>
-          <td><input type="number" id="p1_sum2" /></td>
-          <td><input type="number" id="p1_sum3" /></td>
-          <td><input type="number" id="p1_sum4" /></td>
-          <td><input type="number" id="p1_sum5" /></td>
-          <td><input type="number" id="p1_sum6" /></td>
-        </tr>
-        <tr>
-          <td>비용</td>
-          <td><input type="checkbox" id="p1_cost1" /></td>
-          <td><input type="checkbox" id="p1_cost2" /></td>
-          <td><input type="checkbox" id="p1_cost3" /></td>
-          <td><input type="checkbox" id="p1_cost4" /></td>
-          <td><input type="checkbox" id="p1_cost5" /></td>
-          <td><input type="checkbox" id="p1_cost6" /></td>
-        </tr>
-        <tr>
-          <td>소계</td>
-          <td><input type="text" id="p1_subtotal1" readonly /></td>
-          <td><input type="text" id="p1_subtotal2" readonly /></td>
-          <td><input type="text" id="p1_subtotal3" readonly /></td>
-          <td><input type="text" id="p1_subtotal4" readonly /></td>
-          <td><input type="text" id="p1_subtotal5" readonly /></td>
-          <td><input type="text" id="p1_subtotal6" readonly /></td>
-        </tr>
-        <tr>
-          <td>배수</td>
-          <td><input type="number" id="p1_multiplier1" /></td>
-          <td><input type="number" id="p1_multiplier2" /></td>
-          <td><input type="number" id="p1_multiplier3" /></td>
-          <td><input type="number" id="p1_multiplier4" /></td>
-          <td><input type="number" id="p1_multiplier5" /></td>
-          <td><input type="number" id="p1_multiplier6" /></td>
-        </tr>
-        <tr>
-          <td>보너스 점수</td>
-          <td><input type="checkbox" id="p1_bonus1" /></td>
-          <td><input type="checkbox" id="p1_bonus2" /></td>
-          <td><input type="checkbox" id="p1_bonus3" /></td>
-          <td><input type="checkbox" id="p1_bonus4" /></td>
-          <td><input type="checkbox" id="p1_bonus5" /></td>
-          <td><input type="checkbox" id="p1_bonus6" /></td>
-        </tr>
-        <tr>
-          <td>총 합계</td>
-          <td><input type="text" id="p1_total1" readonly /></td>
-          <td><input type="text" id="p1_total2" readonly /></td>
-          <td><input type="text" id="p1_total3" readonly /></td>
-          <td><input type="text" id="p1_total4" readonly /></td>
-          <td><input type="text" id="p1_total5" readonly /></td>
-          <td><input type="text" id="p1_total6" readonly /></td>
-        </tr>
-      </tbody>
+            <!-- 하단 점수 -->
+            <tr>
+                <td class="fixed-score-label">Full House</br>25점</td>
+                <td>동일 주사위 3개</br>+ 동일 주사위 2개</td>
+                <td><input type="checkbox" id="fullHouse" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td class="fixed-score-label">Small Straight</br>30점</td>
+                <td>연속된 4개의 주사위</td>
+                <td><input type="checkbox" id="smallStraight" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td class="fixed-score-label">Large Straight</br>40점</td>
+                <td>연속된 5개의 주사위</td>
+                <td><input type="checkbox" id="largeStraight" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Chance</td>
+                <td>5개 주사위의 총합</td>
+                <td><input type="number" id="chance" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td class="fixed-score-label">Yatzy</br>50점</td>
+                <td>동일 주사위 5개</td>
+                <td><input type="checkbox" id="yatzy" onchange="calculateTotal()"></td>
+            </tr>
+        </tbody>
     </table>
-
-    <div class="inline-container">
-      <h2>Player 2</h2>
-      <input type="text" id="player2Name" />
     </div>
-    <table id="player2-table">
-      <thead>
-        <tr>
-          <th>점수 종류</th>
-          <th>카드1</th>
-          <th>카드2</th>
-          <th>카드3</th>
-          <th>카드4</th>
-          <th>카드5</th>
-          <th>카드6</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>합계</td>
-          <td><input type="number" id="p2_sum1" /></td>
-          <td><input type="number" id="p2_sum2" /></td>
-          <td><input type="number" id="p2_sum3" /></td>
-          <td><input type="number" id="p2_sum4" /></td>
-          <td><input type="number" id="p2_sum5" /></td>
-          <td><input type="number" id="p2_sum6" /></td>
-        </tr>
-        <tr>
-          <td>비용</td>
-          <td><input type="checkbox" id="p2_cost1" /></td>
-          <td><input type="checkbox" id="p2_cost2" /></td>
-          <td><input type="checkbox" id="p2_cost3" /></td>
-          <td><input type="checkbox" id="p2_cost4" /></td>
-          <td><input type="checkbox" id="p2_cost5" /></td>
-          <td><input type="checkbox" id="p2_cost6" /></td>
-        </tr>
-        <tr>
-          <td>소계</td>
-          <td><input type="text" id="p2_subtotal1" readonly /></td>
-          <td><input type="text" id="p2_subtotal2" readonly /></td>
-          <td><input type="text" id="p2_subtotal3" readonly /></td>
-          <td><input type="text" id="p2_subtotal4" readonly /></td>
-          <td><input type="text" id="p2_subtotal5" readonly /></td>
-          <td><input type="text" id="p2_subtotal6" readonly /></td>
-        </tr>
-        <tr>
-          <td>곱하는수</td>
-          <td><input type="number" id="p2_multiplier1" /></td>
-          <td><input type="number" id="p2_multiplier2" /></td>
-          <td><input type="number" id="p2_multiplier3" /></td>
-          <td><input type="number" id="p2_multiplier4" /></td>
-          <td><input type="number" id="p2_multiplier5" /></td>
-          <td><input type="number" id="p2_multiplier6" /></td>
-        </tr>
-        <tr>
-          <td>보너스 점수</td>
-          <td><input type="checkbox" id="p2_bonus1" /></td>
-          <td><input type="checkbox" id="p2_bonus2" /></td>
-          <td><input type="checkbox" id="p2_bonus3" /></td>
-          <td><input type="checkbox" id="p2_bonus4" /></td>
-          <td><input type="checkbox" id="p2_bonus5" /></td>
-          <td><input type="checkbox" id="p2_bonus6" /></td>
-        </tr>
-        <tr>
-          <td>총합계</td>
-          <td><input type="text" id="p2_total1" readonly /></td>
-          <td><input type="text" id="p2_total2" readonly /></td>
-          <td><input type="text" id="p2_total3" readonly /></td>
-          <td><input type="text" id="p2_total4" readonly /></td>
-          <td><input type="text" id="p2_total5" readonly /></td>
-          <td><input type="text" id="p2_total6" readonly /></td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- 화면 하단에 고정된 총합 섹션 -->
+    <div class="fixed-bottom">
+        총합: <span id="totalScore">0</span>
+    </div>
 
-    <button id="newGameButton" onclick="startNewGame()">새 게임</button>
-    <button id="calcButton" onclick="calculatePlayerScores()">계산</button>
-    <button id="saveButton" onclick="calculateAndSaveScores()">저장</button>
-    <button onclick="resetScores()">기록 초기화</button>
-
-    <h2>저장된 점수 기록</h2>
-    <div id="savedScores"></div>
-
+    <div id="overlay"></div>
+    <div id="recordDialog">
+        <h2>저장된 기록</h2>
+        <div id="recordList"></div>
+        <button onclick="closeDialog()">닫기</button>
+    </div>
     <script>
-      // 플레이어 이름을 저장하는 함수
-      function savePlayerNames() {
-        const player1Name =
-          document.getElementById("player1Name").value || "플레이어 1";
-        const player2Name =
-          document.getElementById("player2Name").value || "플레이어 2";
+        let sessionId = localStorage.getItem('sessionId') || generateRandomId();
 
-        localStorage.setItem("player1Name", player1Name);
-        localStorage.setItem("player2Name", player2Name);
-      }
+        function generateRandomId() {
+            const randomId = Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('sessionId', randomId);
+            return randomId;
+        }
+        
+        function calculateTotal() {
+            // 상단 점수 계산
+            const ones = parseInt(document.getElementById('ones').value) || 0;
+            const twos = parseInt(document.getElementById('twos').value) || 0;
+            const threes = parseInt(document.getElementById('threes').value) || 0;
+            const fours = parseInt(document.getElementById('fours').value) || 0;
+            const fives = parseInt(document.getElementById('fives').value) || 0;
+            const sixes = parseInt(document.getElementById('sixes').value) || 0;
 
-      // 저장된 플레이어 이름을 불러오는 함수
-      function loadPlayerNames() {
-        const player1Name = localStorage.getItem("player1Name") || "플레이어 1";
-        const player2Name = localStorage.getItem("player2Name") || "플레이어 2";
+            // 상단 점수 합계
+            const upperTotal = ones + twos + threes + fours + fives + sixes;
 
-        document.getElementById("player1Name").value = player1Name;
-        document.getElementById("player2Name").value = player2Name;
-      }
+            // 보너스 점수 계산 (상단 점수가 63 이상일 경우 35점)
+            let bonus = 0;
+            if (upperTotal >= 63) {
+                bonus = 35;
+            }
+            document.getElementById('bonusScore').innerText = bonus;
 
-      // 저장 버튼을 비활성화하고 새 게임 버튼을 활성화하는 함수
-      function handleSaveButtonState(isDisabled) {
-        document.getElementById("saveButton").disabled = isDisabled;
-        document.getElementById("calcButton").disabled = isDisabled;
-      }
+            // 하단 고정 점수 계산
+            const fullHouse = document.getElementById('fullHouse').checked ? 25 : 0;
+            const smallStraight = document.getElementById('smallStraight').checked ? 30 : 0;
+            const largeStraight = document.getElementById('largeStraight').checked ? 40 : 0;
+            const chance = parseInt(document.getElementById('chance').value) || 0;
+            const yatzy = document.getElementById('yatzy').checked ? 50 : 0;
 
-      // 새 게임 시작 함수
-      function startNewGame() {
-        document.querySelectorAll('input[type="number"]').forEach((input) => {
-          input.value = "";
-        });
-        document.querySelectorAll('input[type="text"]').forEach((input) => {
-          input.value = "";
-        });
-        document
-          .querySelectorAll('input[type="checkbox"]')
-          .forEach((checkbox) => {
-            checkbox.checked = false;
-          });
+            // 총합 계산
+            const totalScore = upperTotal + bonus + fullHouse + smallStraight + largeStraight + chance + yatzy;
 
-        // 새 게임 시작 시 저장 버튼 활성화
-        handleSaveButtonState(false);
-        displayCurrentRound();
-        loadPlayerNames();
-      }
+            // 총합 출력
+            document.getElementById('totalScore').innerText = totalScore;
+          
+            saveDataToLocalStorage(totalScore)
+        }
+  
+         // 로컬 스토리지에 데이터 저장
+        function saveDataToLocalStorage(totalScore) {
+            const scoreData = {
+                ones: document.getElementById('ones').value,
+                twos: document.getElementById('twos').value,
+                threes: document.getElementById('threes').value,
+                fours: document.getElementById('fours').value,
+                fives: document.getElementById('fives').value,
+                sixes: document.getElementById('sixes').value,
+                fullHouse: document.getElementById('fullHouse').checked,
+                smallStraight: document.getElementById('smallStraight').checked,
+                largeStraight: document.getElementById('largeStraight').checked,
+                chance: document.getElementById('chance').value,
+                yatzy: document.getElementById('yatzy').checked,
+                totalScore: totalScore
+            };
+            localStorage.setItem('scoreData', JSON.stringify(scoreData));
+        }
 
-      // 오늘 날짜의 라운드만 표시하는 함수 (업데이트는 하지 않음)
-      function displayCurrentRound() {
-        const today = new Date().toISOString().split("T")[0]; // 오늘 날짜 (YYYY-MM-DD 형식)
-        let storedData = JSON.parse(localStorage.getItem("roundData")) || {
-          date: today,
-          round: 1,
+        function saveRecords() {
+            const scoreData = JSON.parse(localStorage.getItem('scoreData'));
+            const date = new Date().toISOString().split(".")[0]; // 오늘 날짜
+            const records = JSON.parse(localStorage.getItem('records')) || {};
+            records[sessionId] = {
+                date: date,
+                totalScore: `${scoreData["totalScore"]}점`
+            };
+            localStorage.setItem('records', JSON.stringify(records));
+        }
+
+        function loadRecords() {
+            const records = JSON.parse(localStorage.getItem('records')) || {};
+            const recordList = document.getElementById('recordList');
+            recordList.innerHTML = '';
+
+            const sortedRecords = Object.values(records).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            for (const record of sortedRecords) {
+                recordList.innerHTML += `<p>${record.date}: ${record.totalScore}</p>`;
+            }
+        }
+
+        function showRecords() {
+            loadRecords();
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('recordDialog').style.display = 'block';
+        }
+
+        function closeDialog() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('recordDialog').style.display = 'none';
+        }
+
+        function newGame() {
+            localStorage.removeItem('scoreData');
+
+            document.getElementById('ones').value = 0;
+            document.getElementById('twos').value = 0;
+            document.getElementById('threes').value = 0;
+            document.getElementById('fours').value = 0;
+            document.getElementById('fives').value = 0;
+            document.getElementById('sixes').value = 0;
+            document.getElementById('fullHouse').checked = false;
+            document.getElementById('smallStraight').checked = false;
+            document.getElementById('largeStraight').checked = false;
+            document.getElementById('chance').value = 0;
+            document.getElementById('yatzy').checked = false;
+
+            document.getElementById('bonusScore').innerText = 0;
+            document.getElementById('totalScore').innerText = 0;
+
+            sessionId = generateRandomId();
+        }
+
+        window.onload = function () {
+            if (localStorage.getItem('scoreData')) {
+                const scoreData = JSON.parse(localStorage.getItem('scoreData'));
+                for (const key in scoreData) {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = scoreData[key];
+                        } else {
+                            element.value = scoreData[key];
+                        }
+                    }
+                }
+                calculateTotal(); // 총합 다시 계산
+            }
+            loadRecords(); // 저장된 기록 로드
         };
-
-        // 오늘 날짜에 해당하는 라운드를 표시
-        if (storedData.date === today) {
-          //document.getElementById("round").value = storedData.round;
-          document.getElementById(
-            "round"
-          ).textContent = `라운드: ${storedData.round}`;
-        } else {
-          // 오늘 날짜에 기록된 라운드가 없으면 1로 초기화
-          //document.getElementById("round").value = 1;
-          document.getElementById("round").textContent = `라운드: 1`;
-        }
-      }
-
-      // 날짜가 바뀌면 라운드를 1로 초기화하고 관리하는 로직
-      function getAndUpdateRound() {
-        const today = new Date().toISOString().split("T")[0]; // 오늘 날짜 (YYYY-MM-DD 형식)
-        let storedData = JSON.parse(localStorage.getItem("roundData")) || {
-          date: today,
-          round: 1,
-        };
-
-        // 날짜가 바뀌었으면 라운드를 1로 초기화
-        if (storedData.date !== today) {
-          storedData = { date: today, round: 1 };
-        }
-
-        // 현재 라운드 값을 반영
-        //document.getElementById("round").value = storedData.round;
-        document.getElementById(
-          "round"
-        ).textContent = `라운드: ${storedData.round}`;
-
-        // 라운드를 증가시켜 다음 라운드 준비
-        storedData.round += 1;
-
-        // 로컬 스토리지에 업데이트된 라운드 데이터 저장
-        localStorage.setItem("roundData", JSON.stringify(storedData));
-      }
-
-      // Calculate and save scores for both players
-      function calculatePlayerScores() {
-        calculateScores(1);
-        calculateScores(2);
-      }
-
-      // Calculate and save scores for both players
-      function calculateAndSaveScores() {
-        // Player 1 calculations
-        let p1_scores = calculateScores(1);
-        let p2_scores = calculateScores(2);
-
-        // 플레이어 이름 저장하기
-        savePlayerNames();
-
-        // 플레이어 이름 가져오기
-        const player1Name = document.getElementById("player1Name").value;
-        const player2Name = document.getElementById("player2Name").value;
-
-        // Store in localStorage
-        const storedRoundData = JSON.parse(localStorage.getItem("roundData"));
-        const round = (storedRoundData && storedRoundData.round) || 1;
-        const scores = {
-          round: round,
-          player1: {
-            name: player1Name,
-            scores: p1_scores,
-          },
-          player2: {
-            name: player2Name,
-            scores: p2_scores,
-          },
-        };
-        let savedScores = JSON.parse(localStorage.getItem("savedScores")) || [];
-        savedScores.push(scores);
-        localStorage.setItem("savedScores", JSON.stringify(savedScores));
-
-        handleSaveButtonState(true);
-        displaySavedScores();
-
-        // 다음 라운드를 위해 라운드 업데이트
-        getAndUpdateRound(); // 계산 후 새 라운드 값 반영
-      }
-
-      // Calculate scores for a player
-      function calculateScores(player) {
-        let scores = [];
-        let totalScore = 0;
-        for (let i = 1; i <= 6; i++) {
-          let sum =
-            parseInt(document.getElementById(`p${player}_sum${i}`).value) || 0;
-          document.getElementById(`p${player}_sum${i}`).value = sum;
-
-          let cost = document.getElementById(`p${player}_cost${i}`).checked
-            ? -20
-            : 0;
-
-          let subtotal = sum + cost;
-          document.getElementById(`p${player}_subtotal${i}`).value = subtotal;
-
-          let multiplier =
-            parseInt(
-              document.getElementById(`p${player}_multiplier${i}`).value
-            ) || 1;
-          document.getElementById(`p${player}_multiplier${i}`).value =
-            multiplier;
-
-          let total = subtotal * multiplier;
-          // Add bonus points separately after total calculation
-          let bonus = document.getElementById(`p${player}_bonus${i}`).checked
-            ? 20
-            : 0;
-          total += bonus;
-
-          document.getElementById(`p${player}_total${i}`).value = total;
-
-          scores.push(total);
-
-          totalScore += total;
-        }
-
-        return { totalScore: totalScore, cardScores: scores };
-      }
-
-      // 점수 기록을 날짜별로 그룹화하여 표시하는 함수
-      function displaySavedScores() {
-        let savedScores = JSON.parse(localStorage.getItem("savedScores")) || [];
-
-        // 날짜별로 점수를 그룹화
-        const scoresByDate = savedScores.reduce((acc, score) => {
-          const date = new Date().toISOString().split("T")[0]; // 오늘 날짜
-          if (!acc[date]) {
-            acc[date] = [];
-          }
-          acc[date].push(score);
-          return acc;
-        }, {});
-
-        // 날짜를 내림차순으로 정렬
-        const sortedDates = Object.keys(scoresByDate).sort(
-          (a, b) => new Date(b) - new Date(a)
-        );
-
-        // HTML로 표시
-        const savedScoresDiv = document.getElementById("savedScores");
-        savedScoresDiv.innerHTML = "";
-
-        for (const [date, scores] of Object.entries(scoresByDate)) {
-          const dateSection = document.createElement("div");
-          dateSection.innerHTML = `<h3>${date}</h3>`;
-
-          const table = document.createElement("table");
-          table.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th>라운드</th>
-                            <th>이름</th>
-                            <th>점수</th>
-                            <th></th>
-                            <th>이름</th>
-                            <th>점수</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${scores
-                          .map(
-                            (score) => `
-                            <tr>
-                                <td>${score.round}</td>
-                                <td>${score.player1.name}</td>
-                                <td>${score.player1.scores.totalScore}</td>
-                                <td></td>
-                                <td>${score.player2.name}</td>
-                                <td>${score.player2.scores.totalScore}</td>
-                            </tr>
-                        `
-                          )
-                          .join("")}
-                    </tbody>
-                `;
-
-          dateSection.appendChild(table);
-          savedScoresDiv.appendChild(dateSection);
-        }
-      }
-
-      // 점수 기록 및 라운드를 초기화하는 함수
-      function resetScores() {
-        if (confirm("정말로 모든 점수 기록을 초기화하시겠습니까?")) {
-          localStorage.removeItem("savedScores"); // 저장된 점수 기록 초기화
-          localStorage.removeItem("roundData"); // 라운드 데이터 초기화
-          localStorage.removeItem("player1Name");
-          localStorage.removeItem("player2Name");
-          alert("점수 기록이 초기화되었습니다.");
-          displayCurrentRound(); // 초기화 후 기록된 점수 목록 업데이트
-          displaySavedScores(); // 라운드를 다시 초기화
-        }
-      }
-
-      // Load saved scores on page load
-      window.onload = function () {
-        displayCurrentRound(); // 라운드를 자동으로 설정
-        displaySavedScores(); // 저장된 점수 표시
-        loadPlayerNames(); // 저장된 플레이어 이름을 불러오기
-      };
     </script>
-  </body>
+</body>
 </html>
