@@ -43,7 +43,14 @@
             text-align: center;
             font-weight: bold;
         }
-
+        .reset-btn {
+            float: right;
+            padding: 5px 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
         /* 테이블 상단에 여유 공간 확보 */
         .content-container {
             margin-bottom: 80px; /* 총합 섹션 높이만큼 여백 추가 */
@@ -52,7 +59,10 @@
 </head>
 <body>
     <div class="content-container">
-    <h3>요추 다이스 점수 계산기</h3>
+    <h3>
+        요추 다이스 점수 계산기
+        <button class="reset-btn" onclick="resetForm()">Reset</button>
+    </h3>
     <table>
         <thead>
             <tr>
@@ -170,7 +180,66 @@
 
             // 총합 출력
             document.getElementById('totalScore').innerText = totalScore;
+          
+            saveDataToLocalStorage()
         }
+  
+         // 로컬 스토리지에 데이터 저장
+        function saveDataToLocalStorage() {
+            const scoreData = {
+                ones: document.getElementById('ones').value,
+                twos: document.getElementById('twos').value,
+                threes: document.getElementById('threes').value,
+                fours: document.getElementById('fours').value,
+                fives: document.getElementById('fives').value,
+                sixes: document.getElementById('sixes').value,
+                fullHouse: document.getElementById('fullHouse').checked,
+                smallStraight: document.getElementById('smallStraight').checked,
+                largeStraight: document.getElementById('largeStraight').checked,
+                chance: document.getElementById('chance').value,
+                yatzy: document.getElementById('yatzy').checked
+            };
+            localStorage.setItem('scoreData', JSON.stringify(scoreData));
+        }
+
+        // reset 버튼 클릭 시 로컬 스토리지 초기화 및 입력 폼 리셋
+        function resetForm() {
+            // 로컬 스토리지 초기화
+            localStorage.removeItem('scoreData');
+
+            // 모든 input 필드를 초기화
+            document.getElementById('ones').value = 0;
+            document.getElementById('twos').value = 0;
+            document.getElementById('threes').value = 0;
+            document.getElementById('fours').value = 0;
+            document.getElementById('fives').value = 0;
+            document.getElementById('sixes').value = 0;
+            document.getElementById('fullHouse').checked = false;
+            document.getElementById('smallStraight').checked = false;
+            document.getElementById('largeStraight').checked = false;
+            document.getElementById('chance').value = 0;
+            document.getElementById('yatzy').checked = false;
+
+            // 보너스와 총합도 초기화
+            document.getElementById('bonusScore').innerText = 0;
+            document.getElementById('totalScore').innerText = 0;
+        }
+        window.onload = function () {
+            if (localStorage.getItem('scoreData')) {
+                const scoreData = JSON.parse(localStorage.getItem('scoreData'));
+                for (const key in scoreData) {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = scoreData[key];
+                        } else {
+                            element.value = scoreData[key];
+                        }
+                    }
+                }
+                calculateTotal(); // 총합 다시 계산
+            }
+        };
     </script>
 </body>
 </html>
