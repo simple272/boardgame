@@ -50,7 +50,69 @@
             color: white;
             border: none;
             cursor: pointer;
+            margin-right: 10px;
         }
+        .show-records-btn {
+            float: right;
+            padding: 5px 10px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+         .record-item {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .record-date {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .record-score {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #333;
+    }
+        #recordDialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 400px;
+            max-height: 30vh; /* 최대 높이 설정 */
+            overflow-y: auto; /* 레코드가 많아질 경우 스크롤 활성화 */
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        #recordDialog h2 {
+            margin-top: 0;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
         /* 테이블 상단에 여유 공간 확보 */
         .content-container {
             margin-bottom: 80px; /* 총합 섹션 높이만큼 여백 추가 */
@@ -61,7 +123,10 @@
     <div class="content-container">
     <h3>
         요추 다이스 점수 계산기
-        <button class="reset-btn" onclick="resetForm()">Reset</button>
+        <button class="show-records-btn" onclick="saveRecords()">저장</button>
+        <button class="show-records-btn" onclick="showRecords()">기록</button>
+        <button class="reset-btn" onclick="newGame()">새게임</button>
+        
     </h3>
     <table>
         <thead>
@@ -135,12 +200,6 @@
                 <td>동일 주사위 5개</td>
                 <td><input type="checkbox" id="yatzy" onchange="calculateTotal()"></td>
             </tr>
-
-            <!-- 총점 
-            <tr class="total-score">
-                <td colspan="2">총합</td>
-                <td id="totalScore">0</td>
-            </tr> -->
         </tbody>
     </table>
     </div>
@@ -148,7 +207,23 @@
     <div class="fixed-bottom">
         총합: <span id="totalScore">0</span>
     </div>
+
+    <div id="overlay" onclick="closeDialog()"></div>
+    <div id="recordDialog">
+        <h2>저장된 기록</h2>
+        <div id="recordList"></div>
+    </div>
+
+    
     <script>
+        let sessionId = localStorage.getItem('sessionId') || generateRandomId();
+
+        function generateRandomId() {
+            const randomId = Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('sessionId', randomId);
+            return randomId;
+        }
+        
         function calculateTotal() {
             // 상단 점수 계산
             const ones = parseInt(document.getElementById('ones').value) || 0;
@@ -181,11 +256,11 @@
             // 총합 출력
             document.getElementById('totalScore').innerText = totalScore;
           
-            saveDataToLocalStorage()
+            saveDataToLocalStorage(totalScore)
         }
   
          // 로컬 스토리지에 데이터 저장
-        function saveDataToLocalStorage() {
+        function saveDataToLocalStorage(totalScore) {
             const scoreData = {
                 ones: document.getElementById('ones').value,
                 twos: document.getElementById('twos').value,
@@ -197,17 +272,53 @@
                 smallStraight: document.getElementById('smallStraight').checked,
                 largeStraight: document.getElementById('largeStraight').checked,
                 chance: document.getElementById('chance').value,
-                yatzy: document.getElementById('yatzy').checked
+                yatzy: document.getElementById('yatzy').checked,
+                totalScore: totalScore
             };
             localStorage.setItem('scoreData', JSON.stringify(scoreData));
         }
 
-        // reset 버튼 클릭 시 로컬 스토리지 초기화 및 입력 폼 리셋
-        function resetForm() {
-            // 로컬 스토리지 초기화
+        function saveRecords() {
+            const scoreData = JSON.parse(localStorage.getItem('scoreData'));
+            const date = new Date().toISOString().split(".")[0]; // 오늘 날짜
+            const records = JSON.parse(localStorage.getItem('records')) || {};
+            records[sessionId] = {
+                date: date,
+                totalScore: `${scoreData["totalScore"]}점`
+            };
+            localStorage.setItem('records', JSON.stringify(records));
+        }
+
+        function loadRecords() {
+            const records = JSON.parse(localStorage.getItem('records')) || {};
+            const recordList = document.getElementById('recordList');
+            recordList.innerHTML = '';
+
+            const sortedRecords = Object.values(records).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            for (const record of sortedRecords) {
+                recordList.innerHTML += `
+                    <div class="record-item">
+                        <div class="record-date">${record.date}</div>
+                        <div class="record-score">${record.totalScore}</div>
+                    </div>`;
+            }
+        }
+
+        function showRecords() {
+            loadRecords();
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('recordDialog').style.display = 'block';
+        }
+
+        function closeDialog() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('recordDialog').style.display = 'none';
+        }
+
+        function newGame() {
             localStorage.removeItem('scoreData');
 
-            // 모든 input 필드를 초기화
             document.getElementById('ones').value = 0;
             document.getElementById('twos').value = 0;
             document.getElementById('threes').value = 0;
@@ -220,10 +331,12 @@
             document.getElementById('chance').value = 0;
             document.getElementById('yatzy').checked = false;
 
-            // 보너스와 총합도 초기화
             document.getElementById('bonusScore').innerText = 0;
             document.getElementById('totalScore').innerText = 0;
+
+            sessionId = generateRandomId();
         }
+
         window.onload = function () {
             if (localStorage.getItem('scoreData')) {
                 const scoreData = JSON.parse(localStorage.getItem('scoreData'));
@@ -239,6 +352,7 @@
                 }
                 calculateTotal(); // 총합 다시 계산
             }
+            loadRecords(); // 저장된 기록 로드
         };
     </script>
 </body>
