@@ -1,1 +1,176 @@
-<iframe src="https://player.audiop.naver.com/player?cpId=audioclip&cpMetaId=CH_3134_EP_7157&partnerKey=f8ae3b53&partnerId=audioclip&extra=" title="오디오 플레이어" width="507px" height="160px" frameborder="0" scrolling="no"></iframe>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>요추 다이스 점수 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .total-score {
+            font-weight: bold;
+        }
+        .fixed-score-label {
+            font-weight: normal;
+        }
+        input {
+            width: 80px;
+            text-align: center;
+        }  
+        .fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* 테이블 상단에 여유 공간 확보 */
+        .content-container {
+            margin-bottom: 80px; /* 총합 섹션 높이만큼 여백 추가 */
+        }
+    </style>
+</head>
+<body>
+    <div class="content-container">
+    <h3>요추 다이스 점수 계산기</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>카테고리</th>
+                <th>설명</th>
+                <th>점수</th>
+            </tr>
+        </thead>
+        <tbody id="scoreTable">
+            <!-- 상단 점수 -->
+            <tr>
+                <td>Ones</td>
+                <td>1 주사위의 합</td>
+                <td><input type="number" id="ones" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Twos</td>
+                <td>2 주사위의 합</td>
+                <td><input type="number" id="twos" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Threes</td>
+                <td>3 주사위의 합</td>
+                <td><input type="number" id="threes" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Fours</td>
+                <td>4 주사위의 합</td>
+                <td><input type="number" id="fours" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Fives</td>
+                <td>5 주사위의 합</td>
+                <td><input type="number" id="fives" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Sixes</td>
+                <td>6 주사위의 합</td>
+                <td><input type="number" id="sixes" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>보너스</br>35점</td>
+                <td>상단 점수의 합이</br>63 이상일 경우</td>
+                <td id="bonusScore">0</td>
+            </tr>
+
+            <!-- 하단 점수 -->
+            <tr>
+                <td class="fixed-score-label">Full House</br>25점</td>
+                <td>동일 주사위 3개</br>+ 동일 주사위 2개</td>
+                <td><input type="checkbox" id="fullHouse" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td class="fixed-score-label">Small Straight</br>30점</td>
+                <td>연속된 4개의 주사위</td>
+                <td><input type="checkbox" id="smallStraight" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td class="fixed-score-label">Large Straight</br>40점</td>
+                <td>연속된 5개의 주사위</td>
+                <td><input type="checkbox" id="largeStraight" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td>Chance</td>
+                <td>5개 주사위의 총합</td>
+                <td><input type="number" id="chance" value="0" min="0" onchange="calculateTotal()"></td>
+            </tr>
+            <tr>
+                <td class="fixed-score-label">Yatzy</br>50점</td>
+                <td>동일 주사위 5개</td>
+                <td><input type="checkbox" id="yatzy" onchange="calculateTotal()"></td>
+            </tr>
+
+            <!-- 총점 
+            <tr class="total-score">
+                <td colspan="2">총합</td>
+                <td id="totalScore">0</td>
+            </tr> -->
+        </tbody>
+    </table>
+    </div>
+    <!-- 화면 하단에 고정된 총합 섹션 -->
+    <div class="fixed-bottom">
+        총합: <span id="totalScore">0</span>
+    </div>
+    <script>
+        function calculateTotal() {
+            // 상단 점수 계산
+            const ones = parseInt(document.getElementById('ones').value) || 0;
+            const twos = parseInt(document.getElementById('twos').value) || 0;
+            const threes = parseInt(document.getElementById('threes').value) || 0;
+            const fours = parseInt(document.getElementById('fours').value) || 0;
+            const fives = parseInt(document.getElementById('fives').value) || 0;
+            const sixes = parseInt(document.getElementById('sixes').value) || 0;
+
+            // 상단 점수 합계
+            const upperTotal = ones + twos + threes + fours + fives + sixes;
+
+            // 보너스 점수 계산 (상단 점수가 63 이상일 경우 35점)
+            let bonus = 0;
+            if (upperTotal >= 63) {
+                bonus = 35;
+            }
+            document.getElementById('bonusScore').innerText = bonus;
+
+            // 하단 고정 점수 계산
+            const fullHouse = document.getElementById('fullHouse').checked ? 25 : 0;
+            const smallStraight = document.getElementById('smallStraight').checked ? 30 : 0;
+            const largeStraight = document.getElementById('largeStraight').checked ? 40 : 0;
+            const chance = parseInt(document.getElementById('chance').value) || 0;
+            const yatzy = document.getElementById('yatzy').checked ? 50 : 0;
+
+            // 총합 계산
+            const totalScore = upperTotal + bonus + fullHouse + smallStraight + largeStraight + chance + yatzy;
+
+            // 총합 출력
+            document.getElementById('totalScore').innerText = totalScore;
+        }
+    </script>
+</body>
+</html>
