@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "https://simple272.github.io/boardgame/static/css/main.793b0fd7.css",
-    "main.js": "https://simple272.github.io/boardgame/static/js/main.fb1d6b74.js",
+    "main.js": "https://simple272.github.io/boardgame/static/js/main.6a424795.js",
     "static/media/fa-solid-900.ttf": "https://simple272.github.io/boardgame/static/media/fa-solid-900.07ed6d5fa32c1d54af0f.ttf",
     "static/media/fa-brands-400.ttf": "https://simple272.github.io/boardgame/static/media/fa-brands-400.0ff70dcbf135d859ebf3.ttf",
     "static/media/fa-solid-900.woff2": "https://simple272.github.io/boardgame/static/media/fa-solid-900.93f719f4d62bfa3e748c.woff2",
@@ -12,10 +12,10 @@
     "static/media/fa-v4compatibility.woff2": "https://simple272.github.io/boardgame/static/media/fa-v4compatibility.6cfec8414be20e2c3426.woff2",
     "index.html": "https://simple272.github.io/boardgame/index.html",
     "main.793b0fd7.css.map": "https://simple272.github.io/boardgame/static/css/main.793b0fd7.css.map",
-    "main.fb1d6b74.js.map": "https://simple272.github.io/boardgame/static/js/main.fb1d6b74.js.map"
+    "main.6a424795.js.map": "https://simple272.github.io/boardgame/static/js/main.6a424795.js.map"
   },
   "entrypoints": [
     "static/css/main.793b0fd7.css",
-    "static/js/main.fb1d6b74.js"
+    "static/js/main.6a424795.js"
   ]
 }
